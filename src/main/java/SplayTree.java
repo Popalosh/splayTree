@@ -12,6 +12,18 @@ public class SplayTree extends SplayNode {
         this.root = tree.root;
     }
 
+    public <T> SplayNode getNode (T element) {
+        return findNode(element);
+    }
+
+    public <T> boolean remove(T element) {
+        return remove(findNode(element));
+    }
+
+    public <T> boolean contanins(T element) {
+        return findNode(element) != null;
+    }
+
     public boolean isEmpty() {
         return this.size == 0;
     }
@@ -185,17 +197,5 @@ public class SplayTree extends SplayNode {
             }
         }
         root = node;
-    }
-
-    public <T> SplayNode getNode (T element) {
-        return findNode(element);
-    }
-
-    public <T> boolean remove(T element) {
-        return remove(findNode(element));
-    }
-
-    public <T> boolean contanins(T element) {
-        return findNode(element) != null;
     }
 }
