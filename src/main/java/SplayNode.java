@@ -1,47 +1,24 @@
-public class SplayNode implements Comparable {
+public class SplayNode <T extends Comparable<T>> implements Comparable <SplayNode<T>>{
     private SplayNode left, right, parent;
-    private Object element;
+    T element;
 
     public SplayNode() {
-        new SplayNode(0, null, null, null);
+        new SplayNode(null, null, null, null);
     }
 
-    public SplayNode(int element) {
+    public SplayNode(T element) {
         new SplayNode(element, null, null, null);
     }
 
-    public SplayNode(Object element, SplayNode left, SplayNode right, SplayNode parent) {
+    public SplayNode(T element, SplayNode left, SplayNode right, SplayNode parent) {
         this.left = left;
         this.right = right;
         this.parent = parent;
         this.element = element;
     }
 
-    public int compareTo(Object anotherNode) {
-        SplayNode node = (SplayNode) anotherNode;
-        if (this.element.equals(node.element)) {
-            return 0;
-        }
-
-        String className = element.getClass().getSimpleName();
-
-        if (className.equals("int")) {
-            return ((Integer) element).compareTo((Integer) node.element);
-        }
-        else if (className.equals("String")) {
-
-            String el = (String) element;
-            String anotherEl = (String) node.element;
-            
-            if (el.length() > anotherEl.length()) {
-                return 1;
-            }
-            if (el.length() < anotherEl.length()) {
-                return -1;
-            }
-        }
-
-        return 0;
+    public int compareTo(SplayNode<T> anotherNode) {
+        return this.element.compareTo(anotherNode.element);
     }
 
     public SplayNode getLeft() {
