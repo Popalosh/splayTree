@@ -49,7 +49,7 @@ public class SplayTree extends SplayNode {
         return true;
     }
 
-    private <T> SplayNode getNode(T element) {
+    private <T> SplayNode findNode(T element) {
         SplayNode previousNode = null;
         SplayNode currentNode = root;
         SplayNode abstractNode = new SplayNode((Comparable) element, null, null, null);
@@ -114,15 +114,7 @@ public class SplayTree extends SplayNode {
         return true;
     }
 
-    public <T> boolean remove(T element) {
-        return remove(getNode(element));
-    }
-
-    public <T> boolean contanins(T element) {
-        return getNode(element) != null;
-    }
-
-    public void rightChildToParent(SplayNode child, SplayNode parent) {
+    private void rightChildToParent(SplayNode child, SplayNode parent) {
         if (parent.getParent() != null) {
             if (parent == parent.getParent().getLeft()) {
                 parent.getParent().setLeft(child);
@@ -140,7 +132,7 @@ public class SplayTree extends SplayNode {
         child.setLeft(parent);
     }
 
-    public void leftChildToParent(SplayNode child, SplayNode parent) {
+    private void leftChildToParent(SplayNode child, SplayNode parent) {
         if (parent.getParent() != null) {
             if (parent == parent.getParent().getLeft()) {
                 parent.getParent().setLeft(child);
@@ -193,5 +185,17 @@ public class SplayTree extends SplayNode {
             }
         }
         root = node;
+    }
+
+    public <T> SplayNode getNode (T element) {
+        return findNode(element);
+    }
+
+    public <T> boolean remove(T element) {
+        return remove(findNode(element));
+    }
+
+    public <T> boolean contanins(T element) {
+        return findNode(element) != null;
     }
 }
