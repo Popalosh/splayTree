@@ -10,6 +10,10 @@ public class SplayNode <T extends Comparable<T>> implements Comparable <SplayNod
         new SplayNode(element, null, null, null);
     }
 
+    public SplayNode (T element, SplayNode parent) {
+        new SplayNode(element,null,null,parent);
+    }
+
     public SplayNode(T element, SplayNode left, SplayNode right, SplayNode parent) {
         this.left = left;
         this.right = right;

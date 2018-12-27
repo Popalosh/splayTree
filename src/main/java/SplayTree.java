@@ -1,4 +1,6 @@
-public class SplayTree extends SplayNode {
+import java.util.*;
+
+public class SplayTree extends SortedSet {
     private SplayNode root;
     private int size;
 
@@ -12,15 +14,16 @@ public class SplayTree extends SplayNode {
         this.root = tree.root;
     }
 
-    public <T> SplayNode getNode (T element) {
+    public <T> SplayNode getNode(T element) {
         return findNode(element);
     }
 
-    public <T> boolean remove(T element) {
-        return remove(findNode(element));
+    public int size() {
+        return this.size;
     }
 
-    public <T> boolean contanins(T element) {
+    public boolean contains(Object o) {
+        Comparable element = (Comparable) o;
         return findNode(element) != null;
     }
 
@@ -28,17 +31,11 @@ public class SplayTree extends SplayNode {
         return this.size == 0;
     }
 
-    public void clear() {
-        if (!this.isEmpty()) {
-            this.root = null;
-            this.size = 0;
-        }
-    }
-
-    public <T> boolean add(T element) {
+    public boolean add(Object o) {
+        Comparable element = (Comparable) o;
         SplayNode node = this.root;
         SplayNode parent = null;
-        SplayNode abstractNode = new SplayNode((Comparable) element, null, null, null);
+        SplayNode abstractNode = new SplayNode((Comparable) element);
 
         while (node != null) {
             parent = root;
@@ -48,7 +45,7 @@ public class SplayTree extends SplayNode {
             } else node = parent.getLeft();
         }
 
-        node = new SplayNode((Comparable) element, null, null, parent);
+        node = new SplayNode((Comparable) element,parent);
 
         if (parent == null) {
             root = node;
@@ -61,10 +58,50 @@ public class SplayTree extends SplayNode {
         return true;
     }
 
+    public boolean remove(Object o) {
+        Comparable element = (Comparable) o;
+        return remove(findNode(element));
+    }
+
+    public boolean containsAll(Collection<?> c) {
+        for (Object object: c) {
+            if (contains(object)) continue;
+            else return false;
+        }
+        return true;
+    }
+
+    public boolean addAll(Collection c) {
+        for (Object object : c) {
+            if (add(object)) continue;
+            else return false;
+        }
+        return true;
+    }
+
+    public boolean retainAll(Collection<?> c) {
+        return false;
+    }
+
+    public boolean removeAll(Collection<?> c) {
+        for (Object object : c) {
+            if (remove(object)) continue;
+            else return false;
+        }
+        return true;
+    }
+
+    public void clear() {
+        if (!this.isEmpty()) {
+            this.root = null;
+            this.size = 0;
+        }
+    }
+
     private <T> SplayNode findNode(T element) {
         SplayNode previousNode = null;
         SplayNode currentNode = root;
-        SplayNode abstractNode = new SplayNode((Comparable) element, null, null, null);
+        SplayNode abstractNode = new SplayNode((Comparable) element);
 
         while (currentNode != null) {
             previousNode = currentNode;
@@ -197,5 +234,102 @@ public class SplayTree extends SplayNode {
             }
         }
         root = node;
+    }
+
+    public Iterator iterator() {
+        return new SubIterator();
+    }
+
+    private class SubIterator implements Iterator {
+
+        private SplayNode current = root;
+        private Stack<SplayNode> stack;
+
+        public SubIterator() {
+            stack = new Stack<>();
+
+            while (current != null) {
+                stack.push(current);
+                current = current.getLeft();
+            }
+        }
+
+        @Override
+        public boolean hasNext() {
+            return !stack.empty();
+        }
+
+        @Override
+        public Comparable next() {
+            SplayNode current = stack.pop();
+            Comparable element = (Comparable) current.getElement();
+            if (current.getRight() != null) {
+                current = current.getRight();
+                while (current != null) {
+                    stack.push(current);
+                    current = current.getLeft();
+                }
+            }
+            return element;
+        }
+    }
+
+    public Object[] toArray() {
+        return new Object[0];
+    }
+
+    public Object[] toArray(Object[] a) {
+        return new Object[0];
+    }
+
+    public Comparator comparator() {
+        return null;
+    }
+
+    public SortedSet subSet(Object fromElement, Object toElement) {
+        return null;
+    }
+
+    public SortedSet headSet(Object toElement) {
+        return null;
+    }
+
+    public SortedSet tailSet(Object fromElement) {
+        return null;
+    }
+
+    public Object first() {
+        return root.element;
+    }
+
+    public Object last() {
+        return null;
+    }
+
+    public boolean equals(Object o) {
+        if (o == this)
+            return true;
+
+        if (!(o instanceof Set))
+            return false;
+        Collection<?> c = (Collection<?>) o;
+        if (c.size() != size())
+            return false;
+        try {
+            return containsAll(c);
+        } catch (ClassCastException | NullPointerException unused) {
+            return false;
+        }
+    }
+
+    public int hashCode() {
+        int code = 0;
+        Iterator iterator = iterator();
+        while (iterator.hasNext()) {
+            Comparable object = (Comparable) iterator.next();
+            if (object != null)
+                code += object.hashCode();
+        }
+        return code;
     }
 }
