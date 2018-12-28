@@ -1,28 +1,14 @@
-public class SplayNode <T extends Comparable<T>> implements Comparable <SplayNode<T>>{
-    private SplayNode left, right, parent;
-    T element;
+public class SplayNode<V> {
 
-    public SplayNode() {
-        new SplayNode(null, null, null, null);
-    }
+    private SplayNode<V> left, right, parent;
 
-    public SplayNode(T element) {
-        new SplayNode(element, null, null, null);
-    }
+    private V value;
 
-    public SplayNode (T element, SplayNode parent) {
-        new SplayNode(element,null,null,parent);
-    }
-
-    public SplayNode(T element, SplayNode left, SplayNode right, SplayNode parent) {
-        this.left = left;
-        this.right = right;
-        this.parent = parent;
-        this.element = element;
-    }
-
-    public int compareTo(SplayNode<T> anotherNode) {
-        return this.element.compareTo(anotherNode.element);
+    public SplayNode(V value) {
+        this.value = value;
+        this.left = null;
+        this.right = null;
+        this.parent = null;
     }
 
     public SplayNode getLeft() {
@@ -37,8 +23,8 @@ public class SplayNode <T extends Comparable<T>> implements Comparable <SplayNod
         return parent;
     }
 
-    public Object getElement() {
-        return element;
+    public V getValue() {
+        return value;
     }
 
     public void setLeft(SplayNode left) {

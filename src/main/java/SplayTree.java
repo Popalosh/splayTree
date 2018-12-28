@@ -1,335 +1,295 @@
 import java.util.*;
 
-public class SplayTree extends SortedSet {
-    private SplayNode root;
+public class SplayTree<V extends Comparable<V>> implements SortedSet<V> {
+
     private int size;
+    private SplayNode<V> root;
 
     public SplayTree() {
         this.root = null;
-        this.size = 0;
+        setSize(0);
     }
 
-    public SplayTree(SplayTree tree) {
-        this.size = tree.size;
-        this.root = tree.root;
+    public SplayTree(SplayTree splayTreeree) {
+        setSize(splayTreeree.size);
+        this.root = splayTreeree.root;
     }
 
-    public <T> SplayNode getNode(T element) {
-        return findNode(element);
-    }
 
+    @Override
     public int size() {
         return this.size;
     }
 
-    public boolean contains(Object o) {
-        Comparable element = (Comparable) o;
-        return findNode(element) != null;
+    private void setSize(int size) {
+        this.size = size;
     }
 
+    @Override
     public boolean isEmpty() {
-        return this.size == 0;
+        return getRoot() == null;
     }
 
-    public boolean add(Object o) {
-        Comparable element = (Comparable) o;
-        SplayNode node = this.root;
-        SplayNode parent = null;
-        SplayNode abstractNode = new SplayNode((Comparable) element);
+    @Override
+    public boolean contains(Object o) {
+        if (this.root == null) return false;
+        V value = (V) o;
+        this.root = splay(this.root, value);
+        return this.root.getValue().equals(value);
+    }
 
-        while (node != null) {
-            parent = root;
+    @Override
+    public Iterator<V> iterator() {
+        return new SubIterator<>(this);
+    }
 
-            if (node.compareTo(abstractNode) < 0) {
-                node = parent.getRight();
-            } else node = parent.getLeft();
+    @Override
+    public Object[] toArray() {
+        Object[] array = new Object[size];
+        int i = 0;
+        for (V value : this) {
+            array[i] = value;
+            i++;
+        }
+        return array;
+    }
+
+    @Override
+    public <T> T[] toArray(T[] a) {
+        return (T[]) this.toArray();
+    }
+
+    @Override
+    public boolean add(V value) {
+        if (this.root == null) {
+            this.root = new SplayNode<>(value);
+            setSize(1);
+            return true;
         }
 
-        node = new SplayNode((Comparable) element,parent);
+        root = splay(root, value);
 
-        if (parent == null) {
-            root = node;
-        } else if (node.compareTo(abstractNode) < 0) {
-            parent.setRight(node);
-        } else parent.setLeft(node);
+        int comparation = value.compareTo(root.getValue());
 
-        this.size++;
-        splay(node);
-        return true;
-    }
-
-    public boolean remove(Object o) {
-        Comparable element = (Comparable) o;
-        return remove(findNode(element));
-    }
-
-    public boolean containsAll(Collection<?> c) {
-        for (Object object: c) {
-            if (contains(object)) continue;
-            else return false;
+        SplayNode<V> splayNode = new SplayNode<>(value);
+        if (comparation < 0) {
+            splayNode.setLeft(root.getLeft());
+            splayNode.setRight(root);
+            root.setLeft(null);
+            root = splayNode;
+            this.size++;
+            return true;
+        } else if (comparation > 0) {
+            splayNode.setRight(root.getRight());
+            splayNode.setLeft(root);
+            root.setRight(null);
+            root = splayNode;
+            size++;
+            return true;
         }
-        return true;
-    }
-
-    public boolean addAll(Collection c) {
-        for (Object object : c) {
-            if (add(object)) continue;
-            else return false;
-        }
-        return true;
-    }
-
-    public boolean retainAll(Collection<?> c) {
         return false;
     }
 
-    public boolean removeAll(Collection<?> c) {
-        for (Object object : c) {
-            if (remove(object)) continue;
-            else return false;
-        }
-        return true;
-    }
+    @Override
+    public boolean remove(Object o) {
+        if (root == null) return false;
 
-    public void clear() {
-        if (!this.isEmpty()) {
-            this.root = null;
-            this.size = 0;
-        }
-    }
+        V value = (V) o;
+        root = splay(root, (V) o);
 
-    private <T> SplayNode findNode(T element) {
-        SplayNode previousNode = null;
-        SplayNode currentNode = root;
-        SplayNode abstractNode = new SplayNode((Comparable) element);
-
-        while (currentNode != null) {
-            previousNode = currentNode;
-            if (abstractNode.compareTo(currentNode) > 0) {
-                currentNode = currentNode.getRight();
-            } else if (abstractNode.compareTo(currentNode) < 0) {
-                currentNode = currentNode.getLeft();
-            } else if (abstractNode.compareTo(currentNode) == 0) {
-                splay(currentNode);
-                return currentNode;
+        if (value.equals(root.getValue())) {
+            if (root.getLeft() == null) {
+                root = root.getRight();
+            } else {
+                SplayNode<V> x = root.getRight();
+                root = root.getLeft();
+                splay(root, value);
+                root.setRight(x);
             }
+            size--;
+            return true;
         }
+        return false;
+    }
 
-        if (previousNode != null) {
-            splay(previousNode);
-            return null;
+    @Override
+    public boolean containsAll(Collection<?> c) {
+        return c.stream().allMatch(this::contains);
+    }
+
+    @Override
+    public boolean addAll(Collection<? extends V> c) {
+        return c.stream().allMatch(this::add);
+    }
+
+    @Override
+    public boolean retainAll(Collection<?> c) {
+        return this.stream().filter(v -> !c.contains(v)).allMatch(this::remove);
+    }
+
+    @Override
+    public boolean removeAll(Collection<?> c) {
+        return c.stream().allMatch(this::remove);
+    }
+
+    @Override
+    public void clear() {
+        this.forEach(this::remove);
+    }
+
+    private SplayNode<V> splay(SplayNode<V> splayNode, V value) {
+        if (splayNode == null) return null;
+
+        if (value.compareTo(splayNode.getValue()) < 0) {
+            if (splayNode.getLeft() == null) {
+                return splayNode;
+            }
+            if (value.compareTo((V) splayNode.getLeft().getValue()) < 0) {
+                splayNode.getLeft().setLeft(splay(splayNode.getLeft().getLeft(), value));
+                splayNode = rotateRight(splayNode);
+            } else if (value.compareTo((V) splayNode.getLeft().getValue()) > 0) {
+                splayNode.getLeft().setRight(splay(splayNode.getLeft().getRight(), value));
+                if (splayNode.getLeft().getRight() != null)
+                    splayNode.setLeft(rotateLeft(splayNode.getLeft()));
+            }
+
+            return splayNode.getLeft() == null ? splayNode : rotateRight(splayNode);
+        } else if (value.compareTo(splayNode.getValue()) > 0) {
+            if (splayNode.getRight() == null) {
+                return splayNode;
+            }
+
+            if (value.compareTo((V) splayNode.getRight().getValue()) < 0) {
+                splayNode.getRight().setLeft(splay(splayNode.getRight().getLeft(), value));
+                if (splayNode.getRight().getLeft() != null)
+                    splayNode.setRight( rotateRight(splayNode.getRight()));
+            } else if (value.compareTo((V) splayNode.getRight().getValue()) > 0) {
+                splayNode.getRight().setRight(splay(splayNode.getRight().getRight(), value));
+                splayNode = rotateLeft(splayNode);
+            }
+
+            return splayNode.getRight() == null ? splayNode : rotateLeft(splayNode);
+        } else return splayNode;
+    }
+
+    private SplayNode<V> rotateRight(SplayNode<V> node) {
+        SplayNode<V> newNode = node.getLeft();
+        node.setLeft(newNode.getRight());
+        newNode.setRight(node);
+        return newNode;
+    }
+
+    private SplayNode<V> rotateLeft(SplayNode<V> node) {
+        SplayNode<V> newNode = node.getRight();
+        node.setRight(newNode.getLeft());
+        newNode.setLeft(node);
+        return newNode;
+    }
+
+    public SplayNode<V> getRoot() {
+        return this.root;
+    }
+
+    @Override
+    public Comparator<? super V> comparator() {
+        return new SubComparator<>();
+    }
+
+    @Override
+    public SortedSet<V> subSet(V fromElement, V toElement) {
+        return subSet(findNode(this.root, fromElement), toElement, new SplayTree<>());
+    }
+
+    private SortedSet<V> subSet(SplayNode<V> splayNode, V to, SortedSet<V> sortedSet) {
+        if (splayNode == null) return sortedSet;
+        sortedSet.add(splayNode.getValue());
+
+        if (splayNode.getValue().equals(to)) return sortedSet;
+        if (splayNode.getLeft() != null) return subSet(splayNode.getLeft(), to, sortedSet);
+        if (splayNode.getRight() != null) return subSet(splayNode.getRight(), to, sortedSet);
+        return sortedSet;
+    }
+
+    @Override
+    public SortedSet<V> headSet(V toElement) {
+        return subSet(this.root.getValue(), toElement);
+    }
+
+    @Override
+    public SortedSet<V> tailSet(V fromElement) {
+        return subSet(fromElement, last());
+    }
+
+    @Override
+    public V first() {
+        return this.stream().min(Objects.requireNonNull(comparator())).get();
+    }
+
+    @Override
+    public V last() {
+        return this.stream().max(Objects.requireNonNull(comparator())).get();
+    }
+
+    private SplayNode<V> findNode(SplayNode<V> splayNode, V value) {
+        if (splayNode.getValue().equals(value)) {
+            return splayNode;
         }
+        if (splayNode.getLeft() != null) return findNode(splayNode.getLeft(), value);
+        if (splayNode.getRight() != null) return findNode(splayNode.getRight(), value);
         return null;
     }
 
-    private boolean remove(SplayNode node) {
-        if (node == null) {
-            return false;
-        }
-
-        splay(node);
-
-        if (node.getLeft() != null && node.getRight() != null) {
-            SplayNode minimum = node.getLeft();
-
-            while (minimum.getRight() != null) {
-                minimum = minimum.getRight();
-            }
-
-            minimum.setRight(node.getRight());
-            node.getRight().setParent(minimum);
-            node.getLeft().setParent(null);
-            root = node.getLeft();
-
-        } else if (node.getRight() != null) {
-            node.getRight().setParent(null);
-            root = node.getRight();
-
-        } else if (node.getLeft() != null) {
-            node.getLeft().setParent(null);
-            {
-                root = node.getLeft();
-            }
-
-        } else {
-            root = null;
-        }
-
-        node.setParent(null);
-        node.setLeft(null);
-        node.setParent(null);
-        node = null;
-        size--;
-        return true;
+    @Override
+    public String toString() {
+        return new ArrayList<>(this).toString();
     }
 
-    private void rightChildToParent(SplayNode child, SplayNode parent) {
-        if (parent.getParent() != null) {
-            if (parent == parent.getParent().getLeft()) {
-                parent.getParent().setLeft(child);
-
-            } else parent.getParent().setRight(child);
+    public class SubComparator<V extends Comparable<V>> implements Comparator<V> {
+        public int compare(V a, V b) {
+            return a.compareTo(b);
         }
-
-        if (child.getLeft() != null) {
-            child.getLeft().setParent(parent);
-        }
-
-        child.setParent(parent.getParent());
-        parent.setParent(child);
-        parent.setRight(child.getLeft());
-        child.setLeft(parent);
     }
 
-    private void leftChildToParent(SplayNode child, SplayNode parent) {
-        if (parent.getParent() != null) {
-            if (parent == parent.getParent().getLeft()) {
-                parent.getParent().setLeft(child);
+    public class SubIterator<V extends Comparable<V>> implements Iterator<V> {
 
-            } else parent.getParent().setRight(child);
-        }
+        private SplayTree splayTree;
+        private Stack<SplayNode<V>> stack;
 
-        if (child.getRight() != null) {
-            child.getRight().setParent(parent);
-        }
+        public SubIterator(SplayTree splayTree) {
 
-        child.setParent(parent.getParent());
-        parent.setParent(child);
-        parent.setLeft(child.getRight());
-        child.setRight(parent);
-    }
+            this.splayTree = splayTree;
 
-    private void splay(SplayNode node) {
-        while (node.getParent() != null) {
-            SplayNode parent = node.getParent();
-            SplayNode grandParent = parent.getParent();
-
-            if (grandParent != null) {
-                if (node == parent.getLeft()) {
-                    leftChildToParent(node, parent);
-
-                } else rightChildToParent(node, parent);
-
-            } else {
-                if (node == parent.getLeft()) {
-                    if (parent == grandParent.getLeft()) {
-                        leftChildToParent(parent, grandParent);
-                        leftChildToParent(node, parent);
-
-                    } else {
-                        leftChildToParent(node, node.getParent());
-                        rightChildToParent(node, node.getParent());
-                    }
-
-                } else {
-                    if (parent == grandParent.getLeft()) {
-                        rightChildToParent(node, node.getParent());
-                        leftChildToParent(node, node.getParent());
-
-                    } else {
-                        rightChildToParent(parent, grandParent);
-                        rightChildToParent(node, parent);
-                    }
-                }
-            }
-        }
-        root = node;
-    }
-
-    public Iterator iterator() {
-        return new SubIterator();
-    }
-
-    private class SubIterator implements Iterator {
-
-        private SplayNode current = root;
-        private Stack<SplayNode> stack;
-
-        public SubIterator() {
             stack = new Stack<>();
-
-            while (current != null) {
-                stack.push(current);
-                current = current.getLeft();
+            SplayNode<V> root = this.splayTree.getRoot();
+            while (root != null) {
+                stack.push(root);
+                root = root.getLeft();
             }
         }
 
         @Override
         public boolean hasNext() {
-            return !stack.empty();
+            return !stack.isEmpty();
         }
 
         @Override
-        public Comparable next() {
-            SplayNode current = stack.pop();
-            Comparable element = (Comparable) current.getElement();
-            if (current.getRight() != null) {
-                current = current.getRight();
-                while (current != null) {
-                    stack.push(current);
-                    current = current.getLeft();
+        public V next() {
+            if (!hasNext()) throw new NoSuchElementException();
+
+            SplayNode<V> smallest = stack.pop();
+            if (smallest.getRight() != null) {
+                SplayNode<V> splayNode = smallest.getRight();
+                while (splayNode != null) {
+                    stack.push(splayNode);
+                    splayNode = splayNode.getLeft();
                 }
             }
-            return element;
+            return smallest.getValue();
         }
-    }
 
-    public Object[] toArray() {
-        return new Object[0];
-    }
-
-    public Object[] toArray(Object[] a) {
-        return new Object[0];
-    }
-
-    public Comparator comparator() {
-        return null;
-    }
-
-    public SortedSet subSet(Object fromElement, Object toElement) {
-        return null;
-    }
-
-    public SortedSet headSet(Object toElement) {
-        return null;
-    }
-
-    public SortedSet tailSet(Object fromElement) {
-        return null;
-    }
-
-    public Object first() {
-        return root.element;
-    }
-
-    public Object last() {
-        return null;
-    }
-
-    public boolean equals(Object o) {
-        if (o == this)
-            return true;
-
-        if (!(o instanceof Set))
-            return false;
-        Collection<?> c = (Collection<?>) o;
-        if (c.size() != size())
-            return false;
-        try {
-            return containsAll(c);
-        } catch (ClassCastException | NullPointerException unused) {
-            return false;
+        @Override
+        public void remove() {
+            splayTree.remove(next());
         }
-    }
-
-    public int hashCode() {
-        int code = 0;
-        Iterator iterator = iterator();
-        while (iterator.hasNext()) {
-            Comparable object = (Comparable) iterator.next();
-            if (object != null)
-                code += object.hashCode();
-        }
-        return code;
     }
 }
