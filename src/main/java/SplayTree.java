@@ -230,6 +230,33 @@ public class SplayTree<V extends Comparable<V>> implements SortedSet<V> {
         return this.stream().max(Objects.requireNonNull(comparator())).get();
     }
 
+    public boolean equals(Object o) {
+        if (o == this)
+            return true;
+
+        if (!(o instanceof Set))
+            return false;
+        Collection<?> c = (Collection<?>) o;
+        if (c.size() != size())
+            return false;
+        try {
+            return containsAll(c);
+        } catch (ClassCastException | NullPointerException unused) {
+            return false;
+        }
+    }
+
+    public int hashCode() {
+        int code = 0;
+        Iterator iterator = iterator();
+        while (iterator.hasNext()) {
+            Comparable object = (Comparable) iterator.next();
+            if (object != null)
+                code += object.hashCode();
+        }
+        return code;
+    }
+
     private SplayNode<V> findNode(SplayNode<V> splayNode, V value) {
         if (splayNode.getValue().equals(value)) {
             return splayNode;
